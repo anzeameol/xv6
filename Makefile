@@ -188,7 +188,10 @@ UPROGS=\
 	$U/_grind\
 	$U/_wc\
 	$U/_zombie\
-
+	$U/_log_stdout\
+	$U/_composites\
+	$U/_xargs\
+	$U/_find\
 
 
 
