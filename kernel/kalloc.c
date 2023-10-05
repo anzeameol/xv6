@@ -28,22 +28,45 @@ struct
 
 void kinit()
 {
-  char name[7] = "kmem ";
   for (int i = 0; i < NCPU; i++)
   {
-    name[5] = i + '0';
-    name[6] = '\0';
-    initlock(&kmem[i].lock, name);
+    initlock(&kmem[i].lock, "kmem");
   }
   freerange(end, (void *)PHYSTOP);
+}
+
+// new kfree function, which the cpuid is set
+void kfreeID(void *pa, int cpuID)
+{
+  struct run *r;
+
+  if (((uint64)pa % PGSIZE) != 0 || (char *)pa < end || (uint64)pa >= PHYSTOP)
+    panic("kfree");
+
+  // Fill with junk to catch dangling refs.
+  memset(pa, 1, PGSIZE);
+
+  r = (struct run *)pa;
+
+  acquire(&kmem[cpuID].lock);
+  r->next = kmem[cpuID].freelist;
+  kmem[cpuID].freelist = r;
+  release(&kmem[cpuID].lock);
 }
 
 void freerange(void *pa_start, void *pa_end)
 {
   char *p;
-  p = (char *)PGROUNDUP((uint64)pa_start);
-  for (; p + PGSIZE <= (char *)pa_end; p += PGSIZE)
-    kfree(p);
+  char *start;
+  start = p = (char *)PGROUNDUP((uint64)pa_start);
+  // printf("%x %x\n", p, (char *)pa_end);
+  int step = ((char *)pa_end - p) / NCPU;
+  // printf("%d\n", step);
+  for (int i = 0; i < NCPU; i++)
+  {
+    for (; p + PGSIZE <= start + (i + 1) * step; p += PGSIZE)
+      kfreeID(p, i);
+  }
 }
 
 // Free the page of physical memory pointed at by pa,
@@ -52,7 +75,9 @@ void freerange(void *pa_start, void *pa_end)
 // initializing the allocator; see kinit above.)
 void kfree(void *pa)
 {
+  push_off();
   int cpuID = cpuid();
+  pop_off();
   struct run *r;
 
   if (((uint64)pa % PGSIZE) != 0 || (char *)pa < end || (uint64)pa >= PHYSTOP)
@@ -84,6 +109,24 @@ kalloc(void)
   r = kmem[cpuID].freelist;
   if (r)
     kmem[cpuID].freelist = r->next;
+  else
+  {
+    for (int i = 0; i < NCPU; i++)
+    {
+      if (i != cpuID)
+      {
+        acquire(&kmem[i].lock);
+        if (kmem[i].freelist)
+        {
+          r = kmem[i].freelist;
+          kmem[i].freelist = kmem[i].freelist->next;
+          release(&kmem[i].lock);
+          break;
+        }
+        release(&kmem[i].lock);
+      }
+    }
+  }
   release(&kmem[cpuID].lock);
 
   if (r)
