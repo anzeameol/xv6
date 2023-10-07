@@ -192,6 +192,9 @@ UPROGS=\
 	$U/_composites\
 	$U/_xargs\
 	$U/_find\
+	$U/_sleep\
+	$U/_pingpong\
+	$U/_primes\
 
 
 
