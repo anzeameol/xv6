@@ -104,3 +104,14 @@ uint64 sys_procnum(void)
   copyout(p->pagetable, ptr, (char *)&num, __SIZEOF_INT__);
   return 0;
 }
+
+uint64 sys_freemem(void)
+{
+  // your implementation here.
+  uint64 ptr;
+  argaddr(0, &ptr);
+  struct proc *p = myproc();
+  int num = nfreemem();
+  copyout(p->pagetable, ptr, (char *)&num, __SIZEOF_INT__);
+  return 0;
+}

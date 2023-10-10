@@ -23,6 +23,7 @@ char *sbrk(int);
 int sleep(int);
 int uptime(void);
 int procnum(int *);
+int freemem(int *);
 
 // ulib.c
 int stat(const char *, struct stat *);
