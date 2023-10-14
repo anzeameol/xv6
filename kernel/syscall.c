@@ -99,6 +99,7 @@ extern uint64 sys_mkdir(void);
 extern uint64 sys_close(void);
 extern uint64 sys_procnum(void);
 extern uint64 sys_freemem(void);
+extern uint64 sys_trace(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -126,7 +127,33 @@ static uint64 (*syscalls[])(void) = {
     [SYS_close] sys_close,
     [SYS_procnum] sys_procnum,
     [SYS_freemem] sys_freemem,
+    [SYS_trace] sys_trace,
 };
+
+static char *syscallname[] = {"fork",
+                              "exit",
+                              "wait",
+                              "pipe",
+                              "read",
+                              "kill",
+                              "exec",
+                              "fstat",
+                              "chdir",
+                              "dup",
+                              "getpid",
+                              "sbrk",
+                              "sleep",
+                              "uptime",
+                              "open",
+                              "write",
+                              "mknod",
+                              "unlink",
+                              "link",
+                              "mkdir",
+                              "close",
+                              "procnum",
+                              "freemem",
+                              "trace"};
 
 void syscall(void)
 {
@@ -139,6 +166,10 @@ void syscall(void)
     // Use num to lookup the system call function for num, call it,
     // and store its return value in p->trapframe->a0
     p->trapframe->a0 = syscalls[num]();
+    if ((1 << num) & p->mask)
+    {
+      printf("%d: syscall %s -> %d\n", p->pid, syscallname[num - 1], p->trapframe->a0);
+    }
   }
   else
   {

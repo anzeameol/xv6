@@ -24,6 +24,7 @@ int sleep(int);
 int uptime(void);
 int procnum(int *);
 int freemem(int *);
+int trace(int);
 
 // ulib.c
 int stat(const char *, struct stat *);

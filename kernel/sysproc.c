@@ -101,8 +101,7 @@ uint64 sys_procnum(void)
   argaddr(0, &ptr);
   struct proc *p = myproc();
   int num = nproc();
-  copyout(p->pagetable, ptr, (char *)&num, __SIZEOF_INT__);
-  return 0;
+  return copyout(p->pagetable, ptr, (char *)&num, __SIZEOF_INT__);
 }
 
 uint64 sys_freemem(void)
@@ -112,6 +111,17 @@ uint64 sys_freemem(void)
   argaddr(0, &ptr);
   struct proc *p = myproc();
   int num = nfreemem();
-  copyout(p->pagetable, ptr, (char *)&num, __SIZEOF_INT__);
+  return copyout(p->pagetable, ptr, (char *)&num, __SIZEOF_INT__);
+}
+
+uint64 sys_trace(void)
+{
+  // your implementation here.
+  int mask;
+  argint(0, &mask);
+  struct proc *p = myproc();
+  acquire(&p->lock);
+  p->mask = mask;
+  release(&p->lock);
   return 0;
 }
