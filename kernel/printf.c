@@ -122,7 +122,7 @@ void printf(char *fmt, ...)
 void panic(char *s)
 {
   pr.locking = 0;
-  backtrace();
+  // backtrace();
   printf("panic: ");
   printf(s);
   printf("\n");

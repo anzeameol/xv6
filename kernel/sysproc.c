@@ -98,17 +98,34 @@ sys_uptime(void)
 uint64 sys_sigalarm(void)
 {
   int ticks;
-  argint(0, &ticks);
   uint64 handler;
+  argint(0, &ticks);
   argaddr(1, &handler);
   struct proc *p = myproc();
   p->ticks = ticks;
-  p->handler = (void (*)())handler;
+  // uint64 addr;
+
+  // if (copyin(p->pagetable, (char *)&addr, handler, sizeof(handler)) < 0)
+  // {
+  //   return -1;
+  // }
+  // p->handler = (void (*)())addr;
+  // printf("%p\n", addr);
+  p->handler = handler;
   p->counter = 0;
-  return 1;
+  p->handler_end = 1;
+  return 0;
 }
 
 uint64 sys_sigreturn(void)
 {
-  return 0;
+  struct proc *p = myproc();
+  // p->ticks = 0;
+  // p->handler = 0;
+  // p->counter = 0;
+  p->handler_end = 1;
+  p->counter = 0;
+  memmove(p->trapframe, p->former_trapframe, sizeof(struct trapframe));
+  // printf("%d\n", p->former_trapframe->a0);
+  return p->trapframe->a0;
 }

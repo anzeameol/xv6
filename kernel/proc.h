@@ -117,6 +117,8 @@ struct proc
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int ticks;
-  void (*handler)();
+  uint64 handler;
   int counter;
+  int handler_end;
+  struct trapframe *former_trapframe;
 };
