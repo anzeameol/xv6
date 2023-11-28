@@ -43,11 +43,13 @@ int copy_on_write(pagetable_t pagetable, uint64 va)
   memmove(mem, (char *)pa, PGSIZE);
   uint flags = PTE_FLAGS(*pte);
   flags = (flags | PTE_W) ^ PTE_C;
+  uvmunmap(pagetable, va, 1, 1);
   if (mappages(pagetable, va, PGSIZE, (uint64)mem, flags) != 0)
   {
     kfree(mem);
     return -1;
   }
+  return 0;
 }
 
 //
@@ -87,7 +89,7 @@ void usertrap(void)
 
     syscall();
   }
-  else if (r_scause() == 8)
+  else if (r_scause() == 15)
   {
     uint64 va = PGROUNDDOWN(r_stval());
     if (copy_on_write(p->pagetable, va) < 0)
