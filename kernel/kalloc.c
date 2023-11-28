@@ -41,6 +41,12 @@ void freerange(void *pa_start, void *pa_end)
   p = (char *)PGROUNDUP((uint64)pa_start);
   for (; p + PGSIZE <= (char *)pa_end; p += PGSIZE)
     kfree(p);
+  for (int i = 0; i < (PHYSTOP - KERNBASE) / PGSIZE; i++)
+  {
+    acquire(&pageRefLock);
+    pageRef[i] = 0;
+    release(&pageRefLock);
+  }
 }
 
 // Free the page of physical memory pointed at by pa,
@@ -104,4 +110,12 @@ void IncreasePageRef(uint64 pa)
   acquire(&pageRefLock);
   pageRef[(pa - KERNBASE) / PGSIZE]++;
   release(&pageRefLock);
+}
+
+int getPageRef(uint64 pa)
+{
+  acquire(&pageRefLock);
+  int num = pageRef[(pa - KERNBASE) / PGSIZE];
+  release(&pageRefLock);
+  return num;
 }

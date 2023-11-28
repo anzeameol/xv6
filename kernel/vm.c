@@ -377,6 +377,7 @@ void uvmclear(pagetable_t pagetable, uint64 va)
 // Return 0 on success, -1 on error.
 int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
 {
+  // printf("copyout\n");
   uint64 n, va0, pa0;
 
   while (len > 0)
@@ -411,6 +412,7 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
     if (n > len)
       n = len;
     if (((*pte) & PTE_W) == 0 && ((*pte) & PTE_C) != 0)
+    // if (((*pte) & PTE_C) != 0)
     {
       char *mem;
       if ((mem = kalloc()) == 0)
@@ -420,21 +422,22 @@ int copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
       memmove(mem, (char *)pa0, PGSIZE);
       uint flags = PTE_FLAGS(*pte);
       flags = (flags | PTE_W) ^ PTE_C;
-      uvmunmap(pagetable, va0, 1, 1);
+      kfree((void *)pa0);
+      *pte = 0;
       if (mappages(pagetable, va0, PGSIZE, (uint64)mem, flags) != 0)
       {
         kfree(mem);
         return -1;
       }
+      pa0 = (uint64)mem;
     }
-    else
-    {
-      memmove((void *)(pa0 + (dstva - va0)), src, n);
-    }
+    // printf("%p\n", (uint64)(*pte));
+    memmove((void *)(pa0 + (dstva - va0)), src, n);
     len -= n;
     src += n;
     dstva = va0 + PGSIZE;
   }
+  // printf("copyout done\n");
   return 0;
 }
 

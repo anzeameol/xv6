@@ -29,21 +29,26 @@ void trapinithart(void)
 
 int copy_on_write(pagetable_t pagetable, uint64 va)
 {
+  if (va >= MAXVA)
+    return -1;
   pte_t *pte = walk(pagetable, va, 0);
   if (pte == 0 || ((*pte) & PTE_V) == 0 || ((*pte) & PTE_W) != 0 || ((*pte) & PTE_C) == 0)
+  // if (pte == 0 || ((*pte) & PTE_V) == 0 || ((*pte) & PTE_C) == 0)
   {
     return -1;
   }
+  uint64 pa = PTE2PA(*pte);
   char *mem;
   if ((mem = kalloc()) == 0)
   {
     return -1;
   }
-  uint64 pa = PTE2PA(*pte);
   memmove(mem, (char *)pa, PGSIZE);
   uint flags = PTE_FLAGS(*pte);
   flags = (flags | PTE_W) ^ PTE_C;
-  uvmunmap(pagetable, va, 1, 1);
+  // uvmunmap(pagetable, va, 1, 1);
+  kfree((void *)pa);
+  *pte = 0;
   if (mappages(pagetable, va, PGSIZE, (uint64)mem, flags) != 0)
   {
     kfree(mem);
