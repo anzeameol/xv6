@@ -112,10 +112,10 @@ void IncreasePageRef(uint64 pa)
   release(&pageRefLock);
 }
 
-int getPageRef(uint64 pa)
-{
-  acquire(&pageRefLock);
-  int num = pageRef[(pa - KERNBASE) / PGSIZE];
-  release(&pageRefLock);
-  return num;
-}
+// int getPageRef(uint64 pa)
+// {
+//   acquire(&pageRefLock);
+//   int num = pageRef[(pa - KERNBASE) / PGSIZE];
+//   release(&pageRefLock);
+//   return num;
+// }
